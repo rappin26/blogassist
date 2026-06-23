@@ -24,10 +24,8 @@ export function getApiKeys(): string[] {
   };
   (process.env.GEMINI_API_KEYS || "").split(",").forEach((k) => add(k));
   add(process.env.GEMINI_API_KEY);
-  add(process.env.GEMINI_API_KEY_2);
-  add(process.env.GEMINI_API_KEY_3);
-  add(process.env.GEMINI_API_KEY_4);
-  add(process.env.GEMINI_API_KEY_5);
+  // _1 ~ _6 어떤 이름으로 넣어도 인식 (사람마다 명명 방식이 달라서)
+  for (let i = 1; i <= 6; i++) add(process.env[`GEMINI_API_KEY_${i}`]);
   return [...new Set(keys)]; // 중복 제거
 }
 
