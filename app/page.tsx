@@ -50,6 +50,7 @@ export default function Home() {
   const [listError, setListError] = useState("");
 
   const [activeKey, setActiveKey] = useState("");
+  const [lastPost, setLastPost] = useState<Post | null>(null);
   const [rewriteLoading, setRewriteLoading] = useState(false);
   const [content, setContent] = useState("");
   const [imagePrompts, setImagePrompts] = useState<string[]>([]);
@@ -111,6 +112,7 @@ export default function Home() {
   async function rewrite(post: Post) {
     const key = post.blogId + post.logNo;
     setActiveKey(key);
+    setLastPost(post);
     setRewriteLoading(true);
     setError("");
     setContent("");
@@ -305,6 +307,14 @@ export default function Home() {
             <div style={{ display: "flex", gap: "8px" }}>
               <button
                 className="toolbtn"
+                onClick={() => lastPost && rewrite(lastPost)}
+                disabled={!lastPost || rewriteLoading}
+                title="같은 글을 다시 생성합니다"
+              >
+                🔄 다시 생성
+              </button>
+              <button
+                className="toolbtn"
                 onClick={() => copyTo(content, "article")}
                 disabled={!content}
               >
@@ -315,6 +325,17 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          {/* 비교용 원문 링크 */}
+          {lastPost && (
+            <div className="source-bar">
+              <span className="source-tag">비교용 원문</span>
+              <span className="source-title">{lastPost.title}</span>
+              <a href={lastPost.link} target="_blank" rel="noreferrer">
+                원문 열기 ↗
+              </a>
+            </div>
+          )}
 
           {/* 작성 중 진행 표시 */}
           {rewriteLoading && (
@@ -342,7 +363,20 @@ export default function Home() {
             )
           )}
 
-          {error && <div className="error">{error}</div>}
+          {error && (
+            <div className="error">
+              {error}
+              {lastPost && (
+                <button
+                  className="retry-btn"
+                  onClick={() => rewrite(lastPost)}
+                  disabled={rewriteLoading}
+                >
+                  🔄 다시 시도
+                </button>
+              )}
+            </div>
+          )}
 
           {/* 이미지 프롬프트 */}
           {imagePrompts.length > 0 && (

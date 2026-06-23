@@ -1,29 +1,14 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchPostBody } from "@/lib/naver";
 import { getStyleSamples } from "@/lib/persona";
 import { getPersona } from "@/lib/personas";
+import { generateText, NoKeyError, QuotaError } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const CANDIDATE_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-flash-latest",
-  "gemini-2.0-flash",
-  "gemini-pro-latest",
-];
-
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "GEMINI_API_KEY가 설정되지 않았습니다. .env.local 파일을 확인하세요." },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json();
     const blogId: string = (body.blogId || "").trim();
     const logNo: string = (body.logNo || "").trim();
@@ -108,42 +93,19 @@ ${sourceText.slice(0, 6000)}
 
 다른 설명이나 메타 코멘트는 붙이지 마세요.`;
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-
     let text = "";
     let usedModel = "";
-    let lastError: any = null;
-
-    for (const modelName of CANDIDATE_MODELS) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: { temperature: 0.85, maxOutputTokens: 8192 },
-        });
-        const result = await model.generateContent(prompt);
-        text = result.response.text().trim();
-        if (text) {
-          usedModel = modelName;
-          break;
-        }
-      } catch (err: any) {
-        lastError = err;
-      }
-    }
-
-    if (!text) {
-      const raw = String(lastError?.message || "");
-      if (raw.includes("429") || /quota|Too Many Requests|rate.?limit/i.test(raw)) {
-        return NextResponse.json(
-          {
-            error:
-              "지금 Gemini 무료 사용량 한도에 도달했어요. 약 1분 뒤에 다시 시도해주세요. (짧은 시간에 여러 번 생성하면 일시적으로 막힙니다)",
-          },
-          { status: 429 }
-        );
-      }
+    try {
+      const out = await generateText(prompt, { temperature: 0.85 });
+      text = out.text;
+      usedModel = out.model;
+    } catch (e: any) {
+      if (e instanceof QuotaError)
+        return NextResponse.json({ error: e.message }, { status: 429 });
+      if (e instanceof NoKeyError)
+        return NextResponse.json({ error: e.message }, { status: 500 });
       return NextResponse.json(
-        { error: raw || "리라이팅에 실패했습니다. 잠시 후 다시 시도해주세요." },
+        { error: e?.message || "리라이팅에 실패했습니다." },
         { status: 500 }
       );
     }

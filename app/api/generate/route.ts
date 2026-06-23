@@ -1,5 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
+import { generateText, NoKeyError, QuotaError } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -17,24 +17,8 @@ const TONE_GUIDE: Record<string, string> = {
   담백함: "군더더기 없이 담백하고 차분한 정보 전달 톤.",
 };
 
-// 무료 등급에서 사용 가능한 모델 후보 (앞에서부터 순차 시도)
-const CANDIDATE_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-flash-latest",
-  "gemini-2.0-flash",
-  "gemini-pro-latest",
-];
-
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "GEMINI_API_KEY가 설정되지 않았습니다. .env.local 파일을 확인하세요." },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json();
     const topic: string = (body.topic || "").trim();
     const keywords: string = (body.keywords || "").trim();
@@ -80,48 +64,19 @@ ${LENGTH_GUIDE[length] || LENGTH_GUIDE["보통"]}
 4. 마지막에 핵심을 정리하는 마무리 단락을 넣어주세요.
 5. 글만 출력하고, 다른 설명이나 메타 코멘트는 붙이지 마세요.`;
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-
     let text = "";
     let usedModel = "";
-    let lastError: any = null;
-
-    for (const modelName of CANDIDATE_MODELS) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 8192,
-          },
-        });
-
-        const result = await model.generateContent(prompt);
-        text = result.response.text().trim();
-
-        if (text) {
-          usedModel = modelName;
-          break;
-        }
-      } catch (err: any) {
-        lastError = err;
-        // 다음 후보 모델로 넘어감
-      }
-    }
-
-    if (!text) {
-      const raw = String(lastError?.message || "");
-      if (raw.includes("429") || /quota|Too Many Requests|rate.?limit/i.test(raw)) {
-        return NextResponse.json(
-          {
-            error:
-              "지금 Gemini 무료 사용량 한도에 도달했어요. 약 1분 뒤에 다시 시도해주세요.",
-          },
-          { status: 429 }
-        );
-      }
+    try {
+      const out = await generateText(prompt, { temperature: 0.8 });
+      text = out.text;
+      usedModel = out.model;
+    } catch (e: any) {
+      if (e instanceof QuotaError)
+        return NextResponse.json({ error: e.message }, { status: 429 });
+      if (e instanceof NoKeyError)
+        return NextResponse.json({ error: e.message }, { status: 500 });
       return NextResponse.json(
-        { error: raw || "모든 모델 시도에 실패했습니다. 잠시 후 다시 시도해주세요." },
+        { error: e?.message || "생성에 실패했습니다." },
         { status: 500 }
       );
     }
