@@ -1,0 +1,373 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --border: #e3e6ea;
+  --text: #1f2329;
+  --muted: #6b7280;
+  --accent: #d97706;
+  --accent-hover: #b45309;
+  --accent-soft: #fef3e2;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Malgun Gothic", sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.header p {
+  color: var(--muted);
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 7px;
+  color: #374151;
+}
+
+.field .hint {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+input[type="text"],
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 11px 13px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #374151;
+}
+
+.chip.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-hover);
+  font-weight: 700;
+}
+
+.btn {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.output {
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+}
+
+.output-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 10px;
+}
+
+.output-head h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.toolbtn {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 7px 13px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.toolbtn:hover {
+  background: #f9fafb;
+}
+
+.toolbtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.article {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 15px;
+  line-height: 1.85;
+  color: #2b2f36;
+  flex: 1;
+}
+
+.placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
+
+.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 9px;
+  padding: 12px 14px;
+  font-size: 13px;
+  margin-top: 14px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+  vertical-align: -3px;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.meta {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 1px dashed var(--border);
+  padding-top: 12px;
+}
+
+.meta a {
+  color: var(--accent-hover);
+}
+
+.post-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 9px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  font-family: inherit;
+}
+
+.post-item:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.post-item.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.post-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.post-cat {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  padding: 2px 7px;
+  margin-top: 1px;
+}
+
+.post-title {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.step-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent-hover);
+  margin-bottom: 14px;
+}
+
+.blog-id {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.persona-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .persona-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.persona-card {
+  text-align: left;
+  border: 2px solid var(--border);
+  background: #fff;
+  border-radius: 11px;
+  padding: 13px 15px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.persona-card:hover {
+  border-color: var(--accent);
+}
+
+.persona-card.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.persona-name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.persona-card.active .persona-name {
+  color: var(--accent-hover);
+}
+
+.persona-blurb {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
