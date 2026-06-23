@@ -52,6 +52,7 @@ export default function Home() {
   const [activeKey, setActiveKey] = useState("");
   const [rewriteLoading, setRewriteLoading] = useState(false);
   const [content, setContent] = useState("");
+  const [imagePrompts, setImagePrompts] = useState<string[]>([]);
   const [info, setInfo] = useState<{
     model: string;
     chars: number;
@@ -60,7 +61,7 @@ export default function Home() {
     persona: string;
   } | null>(null);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState("");
 
   function currentIds(): string[] {
     return urlsText
@@ -113,8 +114,9 @@ export default function Home() {
     setRewriteLoading(true);
     setError("");
     setContent("");
+    setImagePrompts([]);
     setInfo(null);
-    setCopied(false);
+    setCopiedKey("");
     try {
       const res = await fetch("/api/rewrite", {
         method: "POST",
@@ -131,6 +133,7 @@ export default function Home() {
         setError(data.error || "리라이팅 실패");
       } else {
         setContent(data.content);
+        setImagePrompts(data.imagePrompts || []);
         setInfo({
           model: data.model,
           chars: data.chars,
@@ -146,11 +149,11 @@ export default function Home() {
     }
   }
 
-  async function copyText() {
-    if (!content) return;
-    await navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+  async function copyTo(text: string, key: string) {
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(""), 1500);
   }
 
   function download() {
@@ -300,8 +303,12 @@ export default function Home() {
           <div className="output-head">
             <h2>새 글 · {personaLabel}</h2>
             <div style={{ display: "flex", gap: "8px" }}>
-              <button className="toolbtn" onClick={copyText} disabled={!content}>
-                {copied ? "복사됨 ✓" : "복사"}
+              <button
+                className="toolbtn"
+                onClick={() => copyTo(content, "article")}
+                disabled={!content}
+              >
+                {copiedKey === "article" ? "복사됨 ✓" : "글 복사"}
               </button>
               <button className="toolbtn" onClick={download} disabled={!content}>
                 .md 저장
@@ -309,17 +316,65 @@ export default function Home() {
             </div>
           </div>
 
-          {content ? (
-            <div className="article">{content}</div>
-          ) : (
-            <div className="placeholder">
-              {rewriteLoading
-                ? `원문을 가져와 '${personaLabel}' 문체로 새로 쓰는 중이에요...`
-                : "왼쪽 목록에서 글 제목을 클릭하면 여기에 새 글이 나옵니다."}
+          {/* 작성 중 진행 표시 */}
+          {rewriteLoading && (
+            <div className="progress-box">
+              <div className="progress-row">
+                <span className="spinner-dark" />
+                <span>
+                  원문을 가져와 '{personaLabel}' 문체로 작성하는 중이에요... (보통
+                  10~20초)
+                </span>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" />
+              </div>
             </div>
           )}
 
+          {content ? (
+            <div className="article">{content}</div>
+          ) : (
+            !rewriteLoading && (
+              <div className="placeholder">
+                왼쪽 목록에서 글 제목을 클릭하면 여기에 새 글이 나옵니다.
+              </div>
+            )
+          )}
+
           {error && <div className="error">{error}</div>}
+
+          {/* 이미지 프롬프트 */}
+          {imagePrompts.length > 0 && (
+            <div className="prompts">
+              <div className="prompts-head">
+                <h3>🖼️ 이미지 프롬프트 ({imagePrompts.length})</h3>
+                <button
+                  className="toolbtn"
+                  onClick={() =>
+                    copyTo(
+                      imagePrompts.map((p, i) => `${i + 1}. ${p}`).join("\n"),
+                      "all-prompts"
+                    )
+                  }
+                >
+                  {copiedKey === "all-prompts" ? "복사됨 ✓" : "전체 복사"}
+                </button>
+              </div>
+              {imagePrompts.map((p, i) => (
+                <div className="prompt-item" key={i}>
+                  <span className="prompt-num">{i + 1}</span>
+                  <span className="prompt-text">{p}</span>
+                  <button
+                    className="toolbtn prompt-copy"
+                    onClick={() => copyTo(p, `p${i}`)}
+                  >
+                    {copiedKey === `p${i}` ? "✓" : "복사"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           {info && (
             <div className="meta">

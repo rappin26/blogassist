@@ -50,25 +50,44 @@ npx vercel --prod
 
 ---
 
-## 방법 B. GitHub 연동 (한 번 설정하면 자동 갱신, 영구 주소)
+## 방법 B. GitHub 연동 (★ 이 방식으로 진행 중 — 한 번 설정하면 자동 갱신, 영구 주소)
 
 코드를 GitHub에 올려두면, 수정 후 push만 해도 Vercel이 자동 재배포합니다.
 
-1. GitHub에 새 저장소(repository)를 만듭니다. (비공개로 두는 걸 권장)
-2. 터미널에서:
-   ```
-   cd C:\Webprogram\blog-writer
-   git init
-   git add .
-   git commit -m "blog-writer 최초 커밋"
-   git branch -M main
-   git remote add origin https://github.com/<내아이디>/<저장소>.git
-   git push -u origin main
-   ```
-   (`.gitignore`가 `.env.local`·`node_modules`·`.next`를 자동 제외하므로 API 키는 올라가지 않습니다.)
-3. https://vercel.com → **Add New → Project → Import** 에서 그 저장소를 선택.
-4. **Environment Variables**에 `GEMINI_API_KEY` 추가 후 **Deploy**.
-5. 이후엔 `git push` 만 하면 자동으로 새 버전이 배포됩니다.
+> ✅ 로컬 git 저장소 초기화와 첫 커밋은 **이미 완료**되어 있습니다(main 브랜치).
+> 아래 1~4단계만 진행하면 됩니다.
+
+### 1) GitHub에 저장소 만들기
+- https://github.com/new 접속
+- Repository name: `blog-writer` (아무 이름이나)
+- **반드시 Private(비공개)로 설정** — `data/persona.json`에 내 실제 블로그 글 846편이 들어있기 때문입니다.
+- README/.gitignore/license는 **추가하지 마세요**(이미 파일이 있음).
+- **Create repository** 클릭.
+
+### 2) 내 PC와 연결 후 올리기 (터미널 또는 `!`로 실행)
+```
+cd C:\Webprogram\blog-writer
+git remote add origin https://github.com/<내아이디>/blog-writer.git
+git push -u origin main
+```
+- 첫 push 때 GitHub 로그인 창(브라우저/자격증명 관리자)이 뜨면 로그인하세요.
+- `.gitignore`가 `.env.local`을 제외하므로 **API 키는 올라가지 않습니다.**
+
+### 3) Vercel에 연결
+- https://vercel.com 로그인(없으면 무료 가입, GitHub 계정으로 가입 추천)
+- **Add New → Project → Import Git Repository** 에서 방금 만든 `blog-writer` 선택
+  (처음이면 "Install Vercel for GitHub" 권한 허용)
+- **Environment Variables** 에 `GEMINI_API_KEY` = (재발급한 Gemini 키) 추가
+- **Deploy** 클릭 → 잠시 후 `https://blog-writer-xxxx.vercel.app` 영구 주소 완성
+
+### 4) 끝! 이후 갱신 방법
+코드를 고친 뒤 아래만 실행하면 Vercel이 자동으로 새 버전을 배포합니다.
+```
+cd C:\Webprogram\blog-writer
+git add .
+git commit -m "수정 내용"
+git push
+```
 
 ---
 

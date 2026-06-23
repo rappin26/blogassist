@@ -110,9 +110,20 @@ ${LENGTH_GUIDE[length] || LENGTH_GUIDE["보통"]}
     }
 
     if (!text) {
-      const msg =
-        lastError?.message || "모든 모델 시도에 실패했습니다. 잠시 후 다시 시도해주세요.";
-      return NextResponse.json({ error: msg }, { status: 500 });
+      const raw = String(lastError?.message || "");
+      if (raw.includes("429") || /quota|Too Many Requests|rate.?limit/i.test(raw)) {
+        return NextResponse.json(
+          {
+            error:
+              "지금 Gemini 무료 사용량 한도에 도달했어요. 약 1분 뒤에 다시 시도해주세요.",
+          },
+          { status: 429 }
+        );
+      }
+      return NextResponse.json(
+        { error: raw || "모든 모델 시도에 실패했습니다. 잠시 후 다시 시도해주세요." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({

@@ -371,3 +371,112 @@ textarea {
   color: var(--muted);
   line-height: 1.4;
 }
+
+/* 작성 중 진행바 */
+.progress-box {
+  background: var(--accent-soft);
+  border: 1px solid #f4d9b0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--accent-hover);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.spinner-dark {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(217, 119, 6, 0.3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.progress-track {
+  height: 6px;
+  background: #f0e0c8;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 40%;
+  background: var(--accent);
+  border-radius: 999px;
+  animation: indeterminate 1.3s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+  0% {
+    margin-left: -40%;
+  }
+  100% {
+    margin-left: 100%;
+  }
+}
+
+/* 이미지 프롬프트 */
+.prompts {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.prompts-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.prompts-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.prompt-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.prompt-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.prompt-text {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #2b2f36;
+}
+
+.prompt-copy {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  font-size: 12px;
+}

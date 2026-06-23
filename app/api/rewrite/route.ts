@@ -89,8 +89,23 @@ ${sourceTitle || "(제목 미상)"}
 [참고할 원문 본문]
 ${sourceText.slice(0, 6000)}
 
+[형식 규칙 — 매우 중요]
+- 절대 ** (별표 두 개) 같은 마크다운 강조 기호를 쓰지 마세요. 굵게 표시하지 말고 평범한 문장으로 쓰세요.
+- 소제목도 별표나 # 기호 없이 그냥 한 줄로 쓰세요.
+
 이제 "${persona.label}" 스타일의 새 블로그 글을 작성하세요.
 첫 줄은 검색에 잘 노출될 매력적인 제목으로 시작하고, 그 다음 줄부터 위 인사말로 본문을 시작하세요.
+
+[본문을 마친 뒤 — 이미지 프롬프트 5개]
+본문을 모두 작성한 다음, 아래 형식으로 본문 흐름(단락)에 맞는 이미지 프롬프트 5개를 추가하세요.
+- 본문과 이미지 프롬프트 사이에 정확히 이 구분선을 넣으세요: ===이미지프롬프트===
+- 구분선 아래에 1. 2. 3. 4. 5. 번호를 붙여 한 줄에 하나씩 작성하세요.
+- 각 프롬프트는 그 단락의 핵심 장면을 시각화한 묘사입니다(도입부, 질환 설명, 보험사 거절, 반박 근거, 마무리 등).
+- 사람이 등장하면 반드시 "한국인"으로 명시하세요.
+- 이미지 안에 글자, 숫자, 질병코드, 로고, 표지판, 문서 위 글씨를 절대 넣지 마세요. ("OOO라는 글자가 보인다" 같은 표현 금지)
+- 글자 대신 인물의 표정, 손짓, 사물, 색감, 분위기로만 의미를 전달하세요.
+- 사실적이고 깔끔한 블로그 삽화 느낌으로, 한국어로 작성하세요.
+
 다른 설명이나 메타 코멘트는 붙이지 마세요.`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -117,21 +132,50 @@ ${sourceText.slice(0, 6000)}
     }
 
     if (!text) {
+      const raw = String(lastError?.message || "");
+      if (raw.includes("429") || /quota|Too Many Requests|rate.?limit/i.test(raw)) {
+        return NextResponse.json(
+          {
+            error:
+              "지금 Gemini 무료 사용량 한도에 도달했어요. 약 1분 뒤에 다시 시도해주세요. (짧은 시간에 여러 번 생성하면 일시적으로 막힙니다)",
+          },
+          { status: 429 }
+        );
+      }
       return NextResponse.json(
-        { error: lastError?.message || "리라이팅에 실패했습니다. 잠시 후 다시 시도해주세요." },
+        { error: raw || "리라이팅에 실패했습니다. 잠시 후 다시 시도해주세요." },
         { status: 500 }
       );
     }
 
-    const lines = text.split("\n");
-    const firstLine = lines[0].replace(/^#+\s*/, "").trim();
+    // 본문과 이미지 프롬프트 분리 (구분선 표기 흔들림 허용)
+    let article = text;
+    let imagePrompts: string[] = [];
+    const parts = text.split(/={2,}\s*이미지\s*프롬프트\s*={2,}/);
+    if (parts.length >= 2) {
+      article = parts[0];
+      imagePrompts = parts[1]
+        .split("\n")
+        .map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim())
+        .filter((l) => l.length > 0)
+        .slice(0, 5);
+    }
+
+    // 마크다운 강조 기호(**), 머리말 # 제거
+    const clean = (s: string) =>
+      s.replace(/\*\*/g, "").replace(/^#+\s*/gm, "").trim();
+    article = clean(article);
+    imagePrompts = imagePrompts.map((p) => p.replace(/\*\*/g, "").trim());
+
+    const firstLine = article.split("\n")[0].trim();
 
     return NextResponse.json({
       title: firstLine,
-      content: text.replace(/^#\s*/, ""),
+      content: article,
+      imagePrompts,
       model: usedModel,
       persona: persona.label,
-      chars: text.replace(/\s/g, "").length,
+      chars: article.replace(/\s/g, "").length,
       sourceChars: sourceText.length,
     });
   } catch (err: any) {
