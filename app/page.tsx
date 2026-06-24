@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // 선택 화면용 간단 정보 (상세 문체/견본은 서버의 lib/personas.ts에 있음)
 const PERSONAS = [
   { id: "hada", label: "안녕하다 (보상하다)", blurb: "친근+단호, 비유 많은 8단 공식" },
   { id: "kind", label: "친절보상", blurb: "차분·정돈된 안내서 톤, 코드 대조" },
   { id: "hero", label: "보상히어로", blurb: "히어로 컨셉 자신감, 표·후유장해 챙김" },
-  { id: "maestro", label: "법률사무소 마에스트로", blurb: "격식 법률체, 의뢰인 호칭, 사례+해시태그" },
+  { id: "maestro", label: "법률사무소 마에스트로", blurb: "격식 법률체, 의뢰인 호칭, 해시태그 마무리" },
 ];
 
 // 저장된 손해사정사 소스 블로그 (클릭해서 추가 / 전체 불러오기)
@@ -81,11 +81,21 @@ export default function Home() {
     setUrlsText(SOURCE_BLOGS.map((b) => b.id).join("\n"));
   }
 
-  async function fetchTitles() {
-    const urls = urlsText
-      .split("\n")
-      .map((u) => u.trim())
-      .filter(Boolean);
+  // 페이지 진입 시 저장된 블로그 전체의 최신 글을 자동으로 불러온다.
+  useEffect(() => {
+    const all = SOURCE_BLOGS.map((b) => b.id);
+    setUrlsText(all.join("\n"));
+    fetchTitles(all);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchTitles(urlsParam?: string[]) {
+    const urls =
+      urlsParam ??
+      urlsText
+        .split("\n")
+        .map((u) => u.trim())
+        .filter(Boolean);
     if (!urls.length) {
       setListError("블로그 주소를 한 줄에 하나씩 입력해주세요.");
       return;
@@ -177,14 +187,14 @@ export default function Home() {
       <div className="header">
         <h1>✍️ 손해사정 블로그 리라이팅 어시스턴트</h1>
         <p>
-          ① 문체를 고르고 → ② 다른 손해사정사 블로그 주소를 넣고 → ③ 글을 클릭하면, 고른
+          ① 문체를 고르고 → ② 좌측에 자동으로 불러온 손해사정 블로그 글을 클릭하면, 고른
           문체로 유사하지 않게 새로 써드립니다.
         </p>
       </div>
 
       {/* STEP 1 — 문체(페르소나) 선택 */}
       <div className="card" style={{ marginBottom: "20px" }}>
-        <div className="step-label">STEP 1. 어떤 블로그 문체로 쓸까요?</div>
+        <div className="step-label">어떤 블로그 문체로 쓸까요?</div>
         <div className="persona-grid">
           {PERSONAS.map((p) => (
             <button
@@ -200,104 +210,123 @@ export default function Home() {
         </div>
       </div>
 
-      {/* STEP 2 — 소스 블로그 주소 입력 */}
-      <div className="card" style={{ marginBottom: "24px" }}>
-        <div className="step-label">STEP 2. 참고할 손해사정사 블로그 주소</div>
-
-        <div style={{ marginBottom: "12px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "8px",
-            }}
-          >
-            <span style={{ fontSize: "12px", color: "#6b7280", fontWeight: 600 }}>
-              저장된 블로그 (클릭해서 추가)
-            </span>
-            <button className="toolbtn" onClick={loadAll} type="button">
-              전체 불러오기 ({SOURCE_BLOGS.length})
+      <div className="layout">
+        {/* 좌측 — 참고 블로그 글 목록 (페이지 진입 시 자동 로딩) */}
+        <div className="card list-card">
+          <div className="list-toolbar">
+            <h2>📰 참고 블로그 글</h2>
+            <button
+              className="toolbtn"
+              onClick={() => fetchTitles()}
+              disabled={listLoading}
+            >
+              {listLoading ? (
+                <>
+                  <span className="spinner-dark" /> 불러오는 중
+                </>
+              ) : (
+                "🔄 다시 불러오기"
+              )}
             </button>
           </div>
-          <div className="chips">
-            {SOURCE_BLOGS.map((b) => (
-              <button
-                key={b.id}
-                className="chip"
-                type="button"
-                onClick={() => addBlog(b.id)}
-                title={b.id}
-              >
-                {b.name}
+
+          {/* 블로그 직접 추가 / 편집 (필요할 때만 펼치기) */}
+          <details className="add-source">
+            <summary>＋ 블로그 직접 추가 / 편집</summary>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "8px",
+              }}
+            >
+              <span style={{ fontSize: "12px", color: "#6b7280", fontWeight: 600 }}>
+                저장된 블로그 (클릭해서 추가)
+              </span>
+              <button className="toolbtn" onClick={loadAll} type="button">
+                전체 채우기 ({SOURCE_BLOGS.length})
               </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="field" style={{ marginBottom: "12px" }}>
-          <textarea
-            style={{ minHeight: "80px" }}
-            placeholder={
-              "한 줄에 하나씩 (네이버 블로그 주소 또는 아이디)\nhttps://blog.naver.com/example1\nexample2"
-            }
-            value={urlsText}
-            onChange={(e) => setUrlsText(e.target.value)}
-          />
-        </div>
-        <button className="btn" onClick={fetchTitles} disabled={listLoading}>
-          {listLoading ? (
-            <>
-              <span className="spinner" />
-              불러오는 중...
-            </>
-          ) : (
-            "최신 손해사정 글 5개 가져오기"
-          )}
-        </button>
-        {listError && <div className="error">{listError}</div>}
-      </div>
-
-      <div className="layout">
-        {/* STEP 3 — 글 목록 */}
-        <div className="card">
-          <div className="output-head">
-            <h2>STEP 3. 글 선택 (클릭)</h2>
-          </div>
-          {blogs.length === 0 ? (
-            <div className="placeholder" style={{ minHeight: "200px" }}>
-              위에 블로그 주소를 넣고 버튼을 누르면 최신 글 목록이 여기에 나옵니다.
             </div>
-          ) : (
-            <div>
-              {blogs.map((b) => (
-                <div key={b.blogId} style={{ marginBottom: "18px" }}>
-                  <div className="blog-id">📌 {b.blogId}</div>
-                  {b.error ? (
-                    <div className="error">{b.error}</div>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-                      {b.posts?.map((p) => {
-                        const key = p.blogId + p.logNo;
-                        return (
-                          <button
-                            key={key}
-                            className={`post-item ${activeKey === key ? "active" : ""}`}
-                            onClick={() => rewrite(p)}
-                            disabled={rewriteLoading}
-                            title={`'${personaLabel}' 문체로 새로 작성합니다`}
-                          >
-                            <span className="post-cat">{p.category || "기타"}</span>
-                            <span className="post-title">{p.title}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+            <div className="chips" style={{ marginBottom: "12px" }}>
+              {SOURCE_BLOGS.map((b) => (
+                <button
+                  key={b.id}
+                  className="chip"
+                  type="button"
+                  onClick={() => addBlog(b.id)}
+                  title={b.id}
+                >
+                  {b.name}
+                </button>
               ))}
             </div>
-          )}
+            <textarea
+              style={{ minHeight: "70px", marginBottom: "10px" }}
+              placeholder={
+                "한 줄에 하나씩 (네이버 블로그 주소 또는 아이디)\nhttps://blog.naver.com/example1\nexample2"
+              }
+              value={urlsText}
+              onChange={(e) => setUrlsText(e.target.value)}
+            />
+            <button
+              className="btn"
+              onClick={() => fetchTitles()}
+              disabled={listLoading}
+            >
+              {listLoading ? (
+                <>
+                  <span className="spinner" />
+                  불러오는 중...
+                </>
+              ) : (
+                "이 목록으로 최신 글 5개 가져오기"
+              )}
+            </button>
+          </details>
+
+          {listError && <div className="error">{listError}</div>}
+
+          <div className="list-scroll">
+            {listLoading && blogs.length === 0 ? (
+              <div className="placeholder" style={{ minHeight: "200px" }}>
+                저장된 블로그에서 최신 글을 불러오는 중입니다...
+              </div>
+            ) : blogs.length === 0 ? (
+              <div className="placeholder" style={{ minHeight: "200px" }}>
+                불러온 글이 없습니다. 🔄 다시 불러오기를 눌러주세요.
+              </div>
+            ) : (
+              <div>
+                {blogs.map((b) => (
+                  <div key={b.blogId} style={{ marginBottom: "18px" }}>
+                    <div className="blog-id">📌 {b.blogId}</div>
+                    {b.error ? (
+                      <div className="error">{b.error}</div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+                        {b.posts?.map((p) => {
+                          const key = p.blogId + p.logNo;
+                          return (
+                            <button
+                              key={key}
+                              className={`post-item ${activeKey === key ? "active" : ""}`}
+                              onClick={() => rewrite(p)}
+                              disabled={rewriteLoading}
+                              title={`'${personaLabel}' 문체로 새로 작성합니다`}
+                            >
+                              <span className="post-cat">{p.category || "기타"}</span>
+                              <span className="post-title">{p.title}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 결과 */}

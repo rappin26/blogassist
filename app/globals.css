@@ -26,9 +26,9 @@ body {
 }
 
 .wrap {
-  max-width: 1080px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 40px 20px 80px;
+  padding: 32px 32px 80px;
 }
 
 .header {
@@ -50,7 +50,7 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: minmax(380px, 480px) 1fr;
   gap: 24px;
   align-items: start;
 }
@@ -59,6 +59,67 @@ body {
   .layout {
     grid-template-columns: 1fr;
   }
+}
+
+/* 좌측 글 목록 — 길어지면 스크롤, 우측은 계속 보이도록 */
+.list-card {
+  position: sticky;
+  top: 24px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.list-scroll {
+  overflow-y: auto;
+  margin: 0 -8px;
+  padding: 0 8px;
+}
+
+@media (max-width: 880px) {
+  .list-card {
+    position: static;
+    max-height: none;
+  }
+}
+
+/* 좌측 카드 상단 툴바 */
+.list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.list-toolbar h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* 블로그 직접 추가(접이식) */
+.add-source {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  background: #fafbfc;
+}
+
+.add-source > summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+  list-style: none;
+}
+
+.add-source > summary::-webkit-details-marker {
+  display: none;
+}
+
+.add-source[open] > summary {
+  margin-bottom: 12px;
 }
 
 .card {
