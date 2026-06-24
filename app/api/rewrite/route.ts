@@ -91,6 +91,19 @@ ${sourceText.slice(0, 6000)}
 - 글자 대신 인물의 표정, 손짓, 사물, 색감, 분위기로만 의미를 전달하세요.
 - 사실적이고 깔끔한 블로그 삽화 느낌으로, 한국어로 작성하세요.
 
+[이미지 프롬프트를 마친 뒤 — 추천 해시태그]
+이미지 프롬프트를 모두 작성한 다음, 이 글의 주제와 위 원문 내용에 맞는 네이버 블로그 검색 노출용 해시태그를 추천하세요.
+- 이미지 프롬프트와 해시태그 사이에 정확히 이 구분선을 넣으세요: ===해시태그===
+- 구분선 아래 한 줄에 8~12개를 #키워드 형태로 공백으로 구분해 나열하세요.
+- 질환명, 질병코드, 보상·약관 쟁점, 손해사정, 후유장해 등 실제 검색에 쓰일 핵심 키워드 위주로 작성하세요.
+- 해시태그는 본문에는 절대 넣지 말고, 오직 이 구분선 아래에만 작성하세요.
+
+[추천 해시태그를 마친 뒤 — 제목 추천 5개]
+마지막으로 이 글에 어울리는, 네이버 검색에 잘 노출될 블로그 제목 5개를 추천하세요.
+- 해시태그와 제목 추천 사이에 정확히 이 구분선을 넣으세요: ===제목추천===
+- 구분선 아래에 1. 2. 3. 4. 5. 번호를 붙여 한 줄에 하나씩 제목만 작성하세요.
+- 본문 첫 줄 제목과는 다른, 서로 다른 각도의 매력적인 변형 5개로 작성하세요.
+
 다른 설명이나 메타 코멘트는 붙이지 마세요.`;
 
     let text = "";
@@ -110,20 +123,46 @@ ${sourceText.slice(0, 6000)}
       );
     }
 
-    // 본문과 이미지 프롬프트 분리 (구분선 표기 흔들림 허용)
-    let article = text;
-    let imagePrompts: string[] = [];
-    const parts = text.split(/={2,}\s*이미지\s*프롬프트\s*={2,}/);
-    if (parts.length >= 2) {
-      article = parts[0];
-      imagePrompts = parts[1]
+    const numberedLines = (s: string, limit: number) =>
+      s
         .split("\n")
         .map((l) => l.replace(/^\s*\d+[.)]\s*/, "").trim())
         .filter((l) => l.length > 0)
-        .slice(0, 5);
+        .slice(0, limit);
+
+    // 1) 꼬리의 제목 추천 블록을 먼저 떼어낸다 (구분선 표기 흔들림 허용)
+    let working = text;
+    let titles: string[] = [];
+    const titleParts = working.split(/={2,}\s*제목\s*추천\s*={2,}/);
+    if (titleParts.length >= 2) {
+      working = titleParts[0];
+      titles = numberedLines(titleParts[titleParts.length - 1], 5).map((t) =>
+        t.replace(/\*\*/g, "").replace(/^#+\s*/, "").trim()
+      );
     }
 
-    // 마크다운 강조 기호(**), 머리말 # 제거
+    // 2) 그 다음 추천 해시태그 블록을 떼어낸다
+    let hashtags: string[] = [];
+    const hashParts = working.split(/={2,}\s*해시\s*태그\s*={2,}/);
+    if (hashParts.length >= 2) {
+      working = hashParts[0];
+      hashtags = hashParts[hashParts.length - 1]
+        .split(/[\s,]+/)
+        .map((t) => t.trim().replace(/\*\*/g, ""))
+        .filter((t) => t.startsWith("#") && t.length > 1)
+        .slice(0, 15);
+    }
+
+    // 3) 남은 부분에서 본문과 이미지 프롬프트 분리
+    let article = working;
+    let imagePrompts: string[] = [];
+    const parts = working.split(/={2,}\s*이미지\s*프롬프트\s*={2,}/);
+    if (parts.length >= 2) {
+      article = parts[0];
+      imagePrompts = numberedLines(parts[1], 5);
+    }
+
+    // 마크다운 강조 기호(**), 머리말 # 제거 (본문에 해시태그가 섞여 들어오면 함께 제거)
     const clean = (s: string) =>
       s.replace(/\*\*/g, "").replace(/^#+\s*/gm, "").trim();
     article = clean(article);
@@ -133,8 +172,10 @@ ${sourceText.slice(0, 6000)}
 
     return NextResponse.json({
       title: firstLine,
+      titles,
       content: article,
       imagePrompts,
+      hashtags,
       model: usedModel,
       persona: persona.label,
       chars: article.replace(/\s/g, "").length,

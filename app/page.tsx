@@ -53,7 +53,9 @@ export default function Home() {
   const [lastPost, setLastPost] = useState<Post | null>(null);
   const [rewriteLoading, setRewriteLoading] = useState(false);
   const [content, setContent] = useState("");
+  const [titles, setTitles] = useState<string[]>([]);
   const [imagePrompts, setImagePrompts] = useState<string[]>([]);
+  const [hashtags, setHashtags] = useState<string[]>([]);
   const [info, setInfo] = useState<{
     model: string;
     chars: number;
@@ -126,7 +128,9 @@ export default function Home() {
     setRewriteLoading(true);
     setError("");
     setContent("");
+    setTitles([]);
     setImagePrompts([]);
+    setHashtags([]);
     setInfo(null);
     setCopiedKey("");
     try {
@@ -145,7 +149,9 @@ export default function Home() {
         setError(data.error || "리라이팅 실패");
       } else {
         setContent(data.content);
+        setTitles(data.titles || []);
         setImagePrompts(data.imagePrompts || []);
+        setHashtags(data.hashtags || []);
         setInfo({
           model: data.model,
           chars: data.chars,
@@ -404,6 +410,52 @@ export default function Home() {
                   🔄 다시 시도
                 </button>
               )}
+            </div>
+          )}
+
+          {/* 추천 제목 5개 (클릭하면 복사) */}
+          {titles.length > 0 && (
+            <div className="titles">
+              <div className="prompts-head">
+                <h3>📝 추천 제목 ({titles.length})</h3>
+              </div>
+              {titles.map((t, i) => (
+                <div className="title-item" key={i}>
+                  <span className="title-num">{i + 1}</span>
+                  <span className="title-text">{t}</span>
+                  <button
+                    className="toolbtn prompt-copy"
+                    onClick={() => copyTo(t, `t${i}`)}
+                  >
+                    {copiedKey === `t${i}` ? "✓" : "복사"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 추천 해시태그 (글 복사에는 포함되지 않음) */}
+          {hashtags.length > 0 && (
+            <div className="hashtags">
+              <div className="prompts-head">
+                <h3>🏷️ 추천 해시태그 ({hashtags.length})</h3>
+                <button
+                  className="toolbtn"
+                  onClick={() => copyTo(hashtags.join(" "), "hashtags")}
+                >
+                  {copiedKey === "hashtags" ? "복사됨 ✓" : "해시태그 복사"}
+                </button>
+              </div>
+              <div className="tag-list">
+                {hashtags.map((t, i) => (
+                  <span className="tag" key={i}>
+                    {t}
+                  </span>
+                ))}
+              </div>
+              <div className="tag-note">
+                해시태그는 글 복사에 포함되지 않습니다. 위 버튼으로 따로 복사하세요.
+              </div>
             </div>
           )}
 
